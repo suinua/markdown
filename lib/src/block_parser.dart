@@ -147,12 +147,12 @@ class BlockParser {
     return regex.hasMatch(next!);
   }
 
-  List<Node> parseLines() {
+  Future<List<Node>> parseLines() async {
     var blocks = <Node>[];
     while (!isDone) {
       for (var syntax in blockSyntaxes) {
         if (syntax.canParse(this)) {
-          var block = syntax.parse(this);
+          var block = await syntax.parse(this);
           if (block != null) blocks.add(block);
           break;
         }
@@ -175,7 +175,7 @@ abstract class BlockSyntax {
     return pattern.hasMatch(parser.current);
   }
 
-  Node? parse(BlockParser parser);
+  Future<Node?> parse(BlockParser parser);
 
   List<String?> parseChildLines(BlockParser parser) {
     // Grab all of the lines that form the block element.
@@ -214,7 +214,7 @@ class EmptyBlockSyntax extends BlockSyntax {
   const EmptyBlockSyntax();
 
   @override
-  Node? parse(BlockParser parser) {
+  Future<Node?> parse(BlockParser parser) async {
     parser.encounteredBlankLine = true;
     parser.advance();
 
@@ -252,7 +252,7 @@ class SetextHeaderSyntax extends BlockSyntax {
   }
 
   @override
-  Node parse(BlockParser parser) {
+  Future<Node> parse(BlockParser parser) async {
     var lines = <String>[];
     String? tag;
     while (!parser.isDone) {
@@ -292,7 +292,7 @@ class SetextHeaderWithIdSyntax extends SetextHeaderSyntax {
   const SetextHeaderWithIdSyntax();
 
   @override
-  Node parse(BlockParser parser) {
+  Future<Node> parse(BlockParser parser) async {
     var element = super.parse(parser) as Element;
     element.generatedId = BlockSyntax.generateAnchorHash(element);
     return element;
@@ -307,7 +307,7 @@ class HeaderSyntax extends BlockSyntax {
   const HeaderSyntax();
 
   @override
-  Node parse(BlockParser parser) {
+  Future<Node> parse(BlockParser parser) async {
     var match = pattern.firstMatch(parser.current)!;
     parser.advance();
     var level = match[1]!.length;
@@ -321,7 +321,7 @@ class HeaderWithIdSyntax extends HeaderSyntax {
   const HeaderWithIdSyntax();
 
   @override
-  Node parse(BlockParser parser) {
+  Future<Node> parse(BlockParser parser) async {
     var element = super.parse(parser) as Element;
     element.generatedId = BlockSyntax.generateAnchorHash(element);
     return element;
@@ -364,11 +364,11 @@ class BlockquoteSyntax extends BlockSyntax {
   }
 
   @override
-  Node parse(BlockParser parser) {
+  Future<Node> parse(BlockParser parser) async {
     var childLines = parseChildLines(parser);
 
     // Recursively parse the contents of the blockquote.
-    var children = BlockParser(childLines, parser.document).parseLines();
+    var children = await BlockParser(childLines, parser.document).parseLines();
 
     return Element('blockquote', children);
   }
@@ -412,7 +412,7 @@ class CodeBlockSyntax extends BlockSyntax {
   }
 
   @override
-  Node parse(BlockParser parser) {
+  Future<Node> parse(BlockParser parser) async {
     var childLines = parseChildLines(parser);
 
     // The Markdown tests expect a trailing newline.
@@ -472,7 +472,7 @@ class FencedCodeBlockSyntax extends BlockSyntax {
   }
 
   @override
-  Node parse(BlockParser parser) {
+  Future<Node> parse(BlockParser parser) async {
     // Get the syntax identifier, if there is one.
     var match = pattern.firstMatch(parser.current)!;
     var endBlock = match.group(1);
@@ -519,7 +519,7 @@ class HorizontalRuleSyntax extends BlockSyntax {
   const HorizontalRuleSyntax();
 
   @override
-  Node parse(BlockParser parser) {
+  Future<Node> parse(BlockParser parser) async {
     parser.advance();
     return Element.empty('hr');
   }
@@ -566,7 +566,7 @@ class BlockTagBlockHtmlSyntax extends BlockHtmlSyntax {
   }
 
   @override
-  Node parse(BlockParser parser) {
+  Future<Node> parse(BlockParser parser) async {
     var childLines = <String>[];
 
     // Eat until we hit a blank line.
@@ -575,7 +575,7 @@ class BlockTagBlockHtmlSyntax extends BlockHtmlSyntax {
       parser.advance();
     }
 
-    return Text(childLines.join('\n').trimRight());
+    return Future.value(Text(childLines.join('\n').trimRight()));
   }
 }
 
@@ -612,7 +612,7 @@ class LongBlockHtmlSyntax extends BlockHtmlSyntax {
         _endPattern = RegExp(endPattern);
 
   @override
-  Node parse(BlockParser parser) {
+  Future<Node> parse(BlockParser parser) async {
     var childLines = <String>[];
     // Eat until we hit [endPattern].
     while (!parser.isDone) {
@@ -622,7 +622,7 @@ class LongBlockHtmlSyntax extends BlockHtmlSyntax {
     }
 
     parser.advance();
-    return Text(childLines.join('\n').trimRight());
+    return Future.value(Text(childLines.join('\n').trimRight()));
   }
 }
 
@@ -665,7 +665,7 @@ abstract class ListSyntax extends BlockSyntax {
   static final _whitespaceRe = RegExp('[ \t]*');
 
   @override
-  Node parse(BlockParser parser) {
+  Future<Node> parse(BlockParser parser) async {
     var items = <ListItem>[];
     var childLines = <String>[];
 
@@ -773,7 +773,7 @@ abstract class ListSyntax extends BlockSyntax {
 
     for (var item in items) {
       var itemParser = BlockParser(item.lines, parser.document);
-      var children = itemParser.parseLines();
+      var children = await itemParser.parseLines();
       itemNodes.add(Element('li', children));
       anyEmptyLinesBetweenBlocks =
           anyEmptyLinesBetweenBlocks || itemParser.encounteredBlankLine;
@@ -884,7 +884,7 @@ class TableSyntax extends BlockSyntax {
   /// * a divider of hyphens and pipes (not rendered)
   /// * many body rows of body cells (`<td>` cells)
   @override
-  Node? parse(BlockParser parser) {
+  Future<Node?> parse(BlockParser parser) async {
     var alignments = _parseAlignments(parser.next!);
     var columnCount = alignments.length;
     var headRow = _parseRow(parser, alignments, 'th');
@@ -1078,7 +1078,7 @@ class ParagraphSyntax extends BlockSyntax {
   bool canParse(BlockParser parser) => true;
 
   @override
-  Node parse(BlockParser parser) {
+  Future<Node> parse(BlockParser parser) async {
     var childLines = <String>[];
 
     // Eat until we hit something that ends a paragraph.

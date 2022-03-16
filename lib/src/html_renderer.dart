@@ -11,7 +11,7 @@ import 'extension_set.dart';
 import 'inline_parser.dart';
 
 /// Converts the given string of Markdown to HTML.
-String markdownToHtml(
+Future<String> markdownToHtml(
   String markdown, {
   Iterable<BlockSyntax> blockSyntaxes = const [],
   Iterable<InlineSyntax> inlineSyntaxes = const [],
@@ -19,7 +19,7 @@ String markdownToHtml(
   Resolver? linkResolver,
   Resolver? imageLinkResolver,
   bool inlineOnly = false,
-}) {
+}) async {
   var document = Document(
     blockSyntaxes: blockSyntaxes,
     inlineSyntaxes: inlineSyntaxes,
@@ -33,7 +33,7 @@ String markdownToHtml(
   // Replace windows line endings with unix line endings, and split.
   var lines = markdown.replaceAll('\r\n', '\n').split('\n');
 
-  return renderToHtml(document.parseLines(lines)) + '\n';
+  return renderToHtml(await document.parseLines(lines)) + '\n';
 }
 
 /// Renders [nodes] to HTML.

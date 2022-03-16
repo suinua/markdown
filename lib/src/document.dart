@@ -38,8 +38,8 @@ class Document {
   }
 
   /// Parses the given [lines] of Markdown to a series of AST nodes.
-  List<Node> parseLines(List<String> lines) {
-    var nodes = BlockParser(lines, this).parseLines();
+  Future<List<Node>> parseLines(List<String> lines) async {
+    var nodes = await BlockParser(lines, this).parseLines();
     _parseInlineContent(nodes);
     return nodes;
   }
