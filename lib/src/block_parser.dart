@@ -293,7 +293,7 @@ class SetextHeaderWithIdSyntax extends SetextHeaderSyntax {
 
   @override
   Future<Node> parse(BlockParser parser) async {
-    var element = super.parse(parser) as Element;
+    var element = (await super.parse(parser)) as Element;
     element.generatedId = BlockSyntax.generateAnchorHash(element);
     return element;
   }
@@ -322,7 +322,7 @@ class HeaderWithIdSyntax extends HeaderSyntax {
 
   @override
   Future<Node> parse(BlockParser parser) async {
-    var element = super.parse(parser) as Element;
+    var element = (await super.parse(parser)) as Element;
     element.generatedId = BlockSyntax.generateAnchorHash(element);
     return element;
   }
