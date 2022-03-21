@@ -200,11 +200,10 @@ abstract class BlockSyntax {
 
   /// Generates a valid HTML anchor from the inner text of [element].
   static String generateAnchorHash(Element element) =>
-      element.children!.first.textContent
+      Uri.parse(element.children!.first.textContent
           .toLowerCase()
           .trim()
-          .replaceAll(RegExp(r'[^a-z0-9 _-]'), '')
-          .replaceAll(RegExp(r'\s'), '-');
+          .replaceAll(RegExp(r'\s'), '-')).toString();
 }
 
 class EmptyBlockSyntax extends BlockSyntax {
